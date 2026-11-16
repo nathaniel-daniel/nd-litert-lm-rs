@@ -1,0 +1,13 @@
+[package]
+name = "nd-litert-lm-sys"
+version = "0.0.0"
+edition = "2024"
+build = "build.rs"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+
+
+[build-dependencies]
+ureq = "3.5.2"
+zip = "9.6.0"

@@ -1,0 +1,6 @@
+[workspace]
+resolver = "3"
+members = [
+    "nd-litert-lm-sys",
+    "nd-litert-lm", "nd-litert-shell",
+]
