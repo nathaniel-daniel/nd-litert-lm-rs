@@ -105,4 +105,5 @@ fn main() {
             );
         }
     }
+    println!("cargo::rerun-if-changed={}", out_dll_path.display());
 }

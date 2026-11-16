@@ -37,7 +37,7 @@ fn get_app_paths() -> anyhow::Result<&'static AppPaths> {
         let strategy = etcetera::choose_app_strategy(AppStrategyArgs {
             top_level_domain: "".to_string(),
             author: "".to_string(),
-            app_name: env!("CARGO_CRATE_NAME").to_string(),
+            app_name: env!("CARGO_PKG_NAME").to_string(),
         })
         .context("Failed to locate app directories")?;
 
@@ -112,6 +112,24 @@ fn get_file_name_from_url(url: &str) -> anyhow::Result<String> {
     Ok(path.to_string())
 }
 
+fn run_help_command() {
+    let command_info = [
+        (".bye", "Exit the program."),
+        (".disable-thinking", "Disable thinking."),
+        (".enable-thinking", "Enable thinking."),
+        (".exit", "Exit the program."),
+        (".help", "Get help about various commands."),
+        (".hide-thinking", "Hide thought process from the user."),
+        (".show-thinking", "Show thought process to the user."),
+        (".quit", "Exit the program."),
+    ];
+
+    println!("Help");
+    for (name, desc) in command_info {
+        println!("{name}: {desc}");
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     let api_version = get_api_version().context("Failed to get api version")?;
     println!("Lite-RT-LM Version: {api_version}");
@@ -146,6 +164,7 @@ fn main() -> anyhow::Result<()> {
 
     let conversation_optional_args = ConversationOptionalArgs::new()?;
     let mut show_thinking = false;
+    run_help_command();
     loop {
         print!("> ");
         std::io::stdout().flush()?;
@@ -169,20 +188,8 @@ fn main() -> anyhow::Result<()> {
                 continue;
             }
             ".help" => {
-                let command_info = [
-                    (".bye", "Exit the program."),
-                    (".disable-thinking", "Disable thinking."),
-                    (".enable-thinking", "Enable thinking."),
-                    (".exit", "Exit the program."),
-                    (".help", "This command. Get help about various commands."),
-                    (".hide-thinking", "Hide thought processes from the user."),
-                    (".show-thinking", "Show thought process to the user."),
-                    (".quit", "Exit the program."),
-                ];
+                run_help_command();
 
-                for (name, desc) in command_info {
-                    println!("{name}: {desc}");
-                }
                 continue;
             }
             ".hide-thinking" => {
