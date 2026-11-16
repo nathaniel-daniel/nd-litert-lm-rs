@@ -66,7 +66,7 @@ jobs:
           key: ${{ runner.os }}-build-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build
-        run: cargo build --features=bundled --workspace --verbose
+        run: cargo build --workspace --verbose
 
       # - name: Run Tests
-      #   run: cargo test --features=bundled --workspace --verbose
+      #   run: cargo test --workspace --verbose
