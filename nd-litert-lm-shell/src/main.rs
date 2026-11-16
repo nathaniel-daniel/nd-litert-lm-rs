@@ -178,7 +178,12 @@ fn main() -> anyhow::Result<()> {
         print!("> ");
         std::io::stdout().flush()?;
         let input = read_input()?;
-        match input.trim().to_lowercase().as_str() {
+        let input_lowercase = input.trim().to_lowercase();
+        let first_word = input_lowercase
+            .split_once(' ')
+            .map(|(head, _tail)| head)
+            .unwrap_or(input_lowercase.as_str());
+        match first_word {
             ".bye" | ".exit" | ".quit" => {
                 break;
             }
