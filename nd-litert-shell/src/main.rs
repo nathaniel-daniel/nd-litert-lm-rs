@@ -142,8 +142,24 @@ fn main() -> anyhow::Result<()> {
         print!("> ");
         std::io::stdout().flush()?;
         let input = read_input()?;
-        if input.to_lowercase() == ".exit" {
-            break;
+        match input.trim().to_lowercase().as_str() {
+            ".bye" | ".exit" | ".quit" => {
+                break;
+            }
+            ".help" => {
+                let command_info = [
+                    (".bye", "Exit the program."),
+                    (".exit", "Exit the program."),
+                    (".help", "This command. Get help about various commands."),
+                    (".quit", "Exit the program."),
+                ];
+
+                for (name, desc) in command_info {
+                    println!("{name}: {desc}");
+                }
+                continue;
+            }
+            _ => {}
         }
 
         let response = conversation
