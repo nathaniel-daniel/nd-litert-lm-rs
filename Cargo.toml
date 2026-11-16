@@ -2,5 +2,6 @@
 resolver = "3"
 members = [
     "nd-litert-lm-sys",
-    "nd-litert-lm", "nd-litert-shell",
+    "nd-litert-lm",
+    "nd-litert-lm-shell",
 ]
