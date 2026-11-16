@@ -6,6 +6,7 @@ use std::ffi::CString;
 #[derive(Debug)]
 pub struct Error {
     message: CString,
+    error: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
 }
 
 impl Error {
@@ -19,7 +20,10 @@ impl Error {
             CString::from(message_cstr)
         };
 
-        Self { message }
+        Self {
+            message,
+            error: None,
+        }
     }
 
     /// Get the last error, and clear it.
@@ -36,7 +40,23 @@ impl Error {
     pub(crate) fn custom(message: &str) -> Self {
         let message = CString::new(message).expect("message has an interior NUL");
 
-        Self { message }
+        Self {
+            message,
+            error: None,
+        }
+    }
+
+    /// Creates an error from a string and error.
+    ///
+    /// # Panics
+    /// Panics if message has an interior nul.
+    pub(crate) fn custom_with_error<E>(message: &str, custom_error: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
+    {
+        let mut error = Self::custom(message);
+        error.error = Some(Box::new(custom_error));
+        error
     }
 }
 
@@ -57,4 +77,8 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(self.error.as_deref()?)
+    }
+}

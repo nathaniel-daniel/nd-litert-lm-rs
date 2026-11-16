@@ -8,6 +8,7 @@ use nd_litert_lm_sys::LiteRtLmStatusCode;
 use nd_litert_lm_sys::LiteRtLmThinkingConfig;
 use nd_litert_lm_sys::litert_lm_conversation_config_create;
 use nd_litert_lm_sys::litert_lm_conversation_config_delete;
+use nd_litert_lm_sys::litert_lm_conversation_config_set_system_message;
 use nd_litert_lm_sys::litert_lm_conversation_config_set_thinking_config;
 use nd_litert_lm_sys::litert_lm_conversation_create;
 use nd_litert_lm_sys::litert_lm_conversation_delete;
@@ -80,6 +81,33 @@ impl ConversationConfig {
         Ok(Self { ptr })
     }
 
+    /// Set the system message.
+    pub fn set_system_message(&self, content: &str) -> Result<(), Error> {
+        #[derive(Debug, serde::Serialize)]
+        struct SystemMessage<'a> {
+            #[serde(rename = "type")]
+            type_: &'static str,
+            text: &'a str,
+        }
+
+        let system_message = serde_json::to_string(&SystemMessage {
+            type_: "text",
+            text: content,
+        })
+        .map_err(|error| Error::custom_with_error("Failed to serialize system_message", error))?;
+        let system_message = CString::new(system_message).map_err(|error| {
+            Error::custom_with_error("system_message had an interior nul", error)
+        })?;
+        let code = unsafe {
+            litert_lm_conversation_config_set_system_message(self.ptr, system_message.as_ptr())
+        };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+
+        Ok(())
+    }
+
     /// Set the thinking config.
     pub fn set_thinking_config(&self, config: &ThinkingConfig) -> Result<(), Error> {
         let code =
@@ -130,6 +158,7 @@ pub struct ConversationMessage {
     pub role: ConversationMessageRole,
     pub content: Vec<ConversationMessageContent>,
     // This should only be specified for response messages.
+    #[serde(default)]
     pub channels: HashMap<String, String>,
 }
 
@@ -197,10 +226,11 @@ impl<'a> Conversation<'a> {
         message: &ConversationMessage,
         optional_args: Option<&ConversationOptionalArgs>,
     ) -> Result<JsonResponse, Error> {
-        let message_json = serde_json::to_string(message)
-            .map_err(|_error| Error::custom("Failed to serialize message to JSON"))?;
+        let message_json = serde_json::to_string(message).map_err(|error| {
+            Error::custom_with_error("Failed to serialize message to JSON", error)
+        })?;
         let message_json = CString::new(message_json)
-            .map_err(|_error| Error::custom("message_json has an interior NUL"))?;
+            .map_err(|error| Error::custom_with_error("message_json has an interior NUL", error))?;
         let extra_context = std::ptr::null();
         let mut response: MaybeUninit<*mut LiteRtLmJsonResponse> = MaybeUninit::zeroed();
         let code = unsafe {
@@ -252,9 +282,9 @@ impl JsonResponse {
         let string = self.get_string()?;
         let string = string
             .to_str()
-            .map_err(|_error| Error::custom("Response is not utf8"))?;
+            .map_err(|error| Error::custom_with_error("Response is not utf8", error))?;
         let parsed = serde_json::from_str(string)
-            .map_err(|_custom| Error::custom("Failed to parse response json"))?;
+            .map_err(|error| Error::custom_with_error("Failed to parse response json", error))?;
         Ok(parsed)
     }
 }

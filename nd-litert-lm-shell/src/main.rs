@@ -150,19 +150,28 @@ fn main() -> anyhow::Result<()> {
         download_to_path_cli(MODEL_URL, &model_path).context("Failed to download model")?;
     }
 
+    println!("Enter system message (Press Enter to skip.):");
+    let system_message = read_input()?;
+
     let engine_settings = EngineSettings::new(&model_path, EngineSettingsBackend::Cpu)
         .context("Failed to create engine settings")?;
     let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
 
-    let thinking_config = ThinkingConfig::new().context("Failed to create thinking config")?;
-    thinking_config.enable_thinking(true)?;
-
     let conversation_config =
         ConversationConfig::new().context("Failed to create conversation config")?;
+    if !system_message.trim().is_empty() {
+        conversation_config.set_system_message(system_message.as_str())?;
+        println!("System prompt set.");
+    }
     let conversation = Conversation::new(&engine, &conversation_config)
         .context("Failed to create conversation")?;
 
+    let thinking_config = ThinkingConfig::new().context("Failed to create thinking config")?;
+    thinking_config.enable_thinking(true)?;
+
     let conversation_optional_args = ConversationOptionalArgs::new()?;
+    conversation_optional_args.set_thinking_config(&thinking_config)?;
+
     let mut show_thinking = false;
     run_help_command();
     loop {
