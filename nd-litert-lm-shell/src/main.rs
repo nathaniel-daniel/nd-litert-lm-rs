@@ -8,12 +8,15 @@ use nd_litert_lm::ConversationMessage;
 use nd_litert_lm::ConversationMessageContent;
 use nd_litert_lm::ConversationMessageContentType;
 use nd_litert_lm::ConversationMessageRole;
+use nd_litert_lm::ConversationOptionalArgs;
 use nd_litert_lm::Engine;
 use nd_litert_lm::EngineSettings;
 use nd_litert_lm::EngineSettingsBackend;
 use nd_litert_lm::LogSeverity;
+use nd_litert_lm::ThinkingConfig;
 use nd_litert_lm::get_api_version;
 use once_cell::sync::OnceCell;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -133,11 +136,16 @@ fn main() -> anyhow::Result<()> {
         .context("Failed to create engine settings")?;
     let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
 
+    let thinking_config = ThinkingConfig::new().context("Failed to create thinking config")?;
+    thinking_config.enable_thinking(true)?;
+
     let conversation_config =
         ConversationConfig::new().context("Failed to create conversation config")?;
     let conversation = Conversation::new(&engine, &conversation_config)
         .context("Failed to create conversation")?;
 
+    let conversation_optional_args = ConversationOptionalArgs::new()?;
+    let mut show_thinking = false;
     loop {
         print!("> ");
         std::io::stdout().flush()?;
@@ -146,11 +154,29 @@ fn main() -> anyhow::Result<()> {
             ".bye" | ".exit" | ".quit" => {
                 break;
             }
+            ".enable-thinking" => {
+                thinking_config.enable_thinking(true)?;
+                conversation_optional_args.set_thinking_config(&thinking_config)?;
+
+                println!("Thinking enabled.");
+                continue;
+            }
+            ".disable-thinking" => {
+                thinking_config.enable_thinking(false)?;
+                conversation_optional_args.set_thinking_config(&thinking_config)?;
+
+                println!("Thinking disabled.");
+                continue;
+            }
             ".help" => {
                 let command_info = [
                     (".bye", "Exit the program."),
+                    (".disable-thinking", "Disable thinking."),
+                    (".enable-thinking", "Enable thinking."),
                     (".exit", "Exit the program."),
                     (".help", "This command. Get help about various commands."),
+                    (".hide-thinking", "Hide thought processes from the user."),
+                    (".show-thinking", "Show thought process to the user."),
                     (".quit", "Exit the program."),
                 ];
 
@@ -159,20 +185,42 @@ fn main() -> anyhow::Result<()> {
                 }
                 continue;
             }
+            ".hide-thinking" => {
+                show_thinking = false;
+
+                println!("Thinking will be hidden.");
+                continue;
+            }
+
+            ".show-thinking" => {
+                show_thinking = true;
+
+                println!("Thinking will be shown.");
+                continue;
+            }
             _ => {}
         }
 
         let response = conversation
-            .send_message(&ConversationMessage {
-                role: ConversationMessageRole::User,
-                content: vec![ConversationMessageContent {
-                    type_: ConversationMessageContentType::Text,
-                    text: input,
-                }],
-            })
+            .send_message(
+                &ConversationMessage {
+                    role: ConversationMessageRole::User,
+                    content: vec![ConversationMessageContent {
+                        type_: ConversationMessageContentType::Text,
+                        text: input,
+                    }],
+                    channels: HashMap::new(),
+                },
+                Some(&conversation_optional_args),
+            )
             .context("Failed to send message")?;
 
         let parsed = response.get_string_parsed()?;
+        if let Some(channel) = parsed.channels.get("thought")
+            && show_thinking
+        {
+            println!("<< {channel}");
+        }
         for content in parsed.content.iter() {
             println!("< {}", content.text);
         }

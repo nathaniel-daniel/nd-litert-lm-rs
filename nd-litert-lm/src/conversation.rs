@@ -2,19 +2,64 @@ use crate::Engine;
 use crate::Error;
 use nd_litert_lm_sys::LiteRtLmConversation;
 use nd_litert_lm_sys::LiteRtLmConversationConfig;
+use nd_litert_lm_sys::LiteRtLmConversationOptionalArgs;
 use nd_litert_lm_sys::LiteRtLmJsonResponse;
 use nd_litert_lm_sys::LiteRtLmStatusCode;
+use nd_litert_lm_sys::LiteRtLmThinkingConfig;
 use nd_litert_lm_sys::litert_lm_conversation_config_create;
 use nd_litert_lm_sys::litert_lm_conversation_config_delete;
+use nd_litert_lm_sys::litert_lm_conversation_config_set_thinking_config;
 use nd_litert_lm_sys::litert_lm_conversation_create;
 use nd_litert_lm_sys::litert_lm_conversation_delete;
+use nd_litert_lm_sys::litert_lm_conversation_optional_args_create;
+use nd_litert_lm_sys::litert_lm_conversation_optional_args_delete;
+use nd_litert_lm_sys::litert_lm_conversation_optional_args_set_thinking_config;
 use nd_litert_lm_sys::litert_lm_conversation_send_message;
 use nd_litert_lm_sys::litert_lm_json_response_delete;
 use nd_litert_lm_sys::litert_lm_json_response_get_string;
+use nd_litert_lm_sys::litert_lm_thinking_config_create;
+use nd_litert_lm_sys::litert_lm_thinking_config_delete;
+use nd_litert_lm_sys::litert_lm_thinking_config_set_enable_thinking;
+use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
+
+#[derive(Debug)]
+pub struct ThinkingConfig {
+    ptr: *mut LiteRtLmThinkingConfig,
+}
+
+impl ThinkingConfig {
+    /// Create a new thinking config.
+    pub fn new() -> Result<Self, Error> {
+        let mut config: MaybeUninit<*mut LiteRtLmThinkingConfig> = MaybeUninit::zeroed();
+        let code = unsafe { litert_lm_thinking_config_create(config.as_mut_ptr()) };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+        let ptr = unsafe { config.assume_init() };
+        Ok(Self { ptr })
+    }
+
+    /// Set whether thinking is enabled.
+    pub fn enable_thinking(&self, enable_thinking: bool) -> Result<(), Error> {
+        let code =
+            unsafe { litert_lm_thinking_config_set_enable_thinking(self.ptr, enable_thinking) };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+
+        Ok(())
+    }
+}
+
+impl Drop for ThinkingConfig {
+    fn drop(&mut self) {
+        unsafe { litert_lm_thinking_config_delete(self.ptr) }
+    }
+}
 
 #[derive(Debug)]
 pub struct ConversationConfig {
@@ -33,6 +78,16 @@ impl ConversationConfig {
         let ptr = unsafe { config.assume_init() };
 
         Ok(Self { ptr })
+    }
+
+    /// Set the thinking config.
+    pub fn set_thinking_config(&self, config: &ThinkingConfig) -> Result<(), Error> {
+        let code =
+            unsafe { litert_lm_conversation_config_set_thinking_config(self.ptr, config.ptr) };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+        Ok(())
     }
 }
 
@@ -74,6 +129,42 @@ pub enum ConversationMessageRole {
 pub struct ConversationMessage {
     pub role: ConversationMessageRole,
     pub content: Vec<ConversationMessageContent>,
+    // This should only be specified for response messages.
+    pub channels: HashMap<String, String>,
+}
+
+pub struct ConversationOptionalArgs {
+    ptr: *mut LiteRtLmConversationOptionalArgs,
+}
+
+impl ConversationOptionalArgs {
+    /// Create new conversation optional args.
+    pub fn new() -> Result<Self, Error> {
+        let mut args: MaybeUninit<*mut LiteRtLmConversationOptionalArgs> = MaybeUninit::zeroed();
+        let code = unsafe { litert_lm_conversation_optional_args_create(args.as_mut_ptr()) };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+        let ptr = unsafe { args.assume_init() };
+        Ok(Self { ptr })
+    }
+
+    /// Set the thinking config.
+    pub fn set_thinking_config(&self, thinking_config: &ThinkingConfig) -> Result<(), Error> {
+        let code = unsafe {
+            litert_lm_conversation_optional_args_set_thinking_config(self.ptr, thinking_config.ptr)
+        };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+        Ok(())
+    }
+}
+
+impl Drop for ConversationOptionalArgs {
+    fn drop(&mut self) {
+        unsafe { litert_lm_conversation_optional_args_delete(self.ptr) }
+    }
 }
 
 #[derive(Debug)]
@@ -101,20 +192,25 @@ impl<'a> Conversation<'a> {
     }
 
     /// Send a message.
-    pub fn send_message(&self, message: &ConversationMessage) -> Result<JsonResponse, Error> {
+    pub fn send_message(
+        &self,
+        message: &ConversationMessage,
+        optional_args: Option<&ConversationOptionalArgs>,
+    ) -> Result<JsonResponse, Error> {
         let message_json = serde_json::to_string(message)
             .map_err(|_error| Error::custom("Failed to serialize message to JSON"))?;
         let message_json = CString::new(message_json)
             .map_err(|_error| Error::custom("message_json has an interior NUL"))?;
         let extra_context = std::ptr::null();
-        let optional_args = std::ptr::null();
         let mut response: MaybeUninit<*mut LiteRtLmJsonResponse> = MaybeUninit::zeroed();
         let code = unsafe {
             litert_lm_conversation_send_message(
                 self.ptr,
                 message_json.as_ptr(),
                 extra_context,
-                optional_args,
+                optional_args
+                    .map(|args| args.ptr)
+                    .unwrap_or(std::ptr::null_mut()),
                 response.as_mut_ptr(),
             )
         };
