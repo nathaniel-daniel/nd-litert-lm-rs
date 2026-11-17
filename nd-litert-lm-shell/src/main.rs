@@ -114,12 +114,13 @@ fn get_file_name_from_url(url: &str) -> anyhow::Result<String> {
 fn run_attach_command(
     command_parser: &mut CommandParser,
     image_attachment: &mut Option<Vec<u8>>,
+    audio_attachment: &mut Option<Vec<u8>>,
 ) -> anyhow::Result<()> {
     if image_attachment.is_some() {
         bail!("An image is already attached");
     }
 
-    let path = command_parser.next_arg().context(".attach needs a path")?;
+    let path = command_parser.next_arg()?.context(".attach needs a path")?;
     let extension = path
         .rsplit_once('.')
         .map(|(_head, tail)| tail)
@@ -128,11 +129,17 @@ fn run_attach_command(
 
     match extension.as_str() {
         "jpg" | "jpeg" | "png" => {
-            let image_data =
-                std::fs::read(path).with_context(|| format!("Failed to read \"{path}\""))?;
-            *image_attachment = Some(image_data);
+            let data = std::fs::read(path).with_context(|| format!("Failed to read \"{path}\""))?;
+            *image_attachment = Some(data);
 
             println!("Attached \"{path}\" as an image.");
+        }
+        // TODO: Add support for OGG by converting to WAV.
+        "mp3" | "wav" => {
+            let data = std::fs::read(path).with_context(|| format!("Failed to read \"{path}\""))?;
+            *audio_attachment = Some(data);
+
+            println!("Attached \"{path}\" as audio.");
         }
         extension => {
             bail!("Unknown extension \"{extension}\"");
@@ -144,7 +151,10 @@ fn run_attach_command(
 
 fn run_help_command() {
     let command_info = [
-        (".attach <path>", "Attach an image to the next chat."),
+        (
+            ".attach <path>",
+            "Attach an image or audio to the next chat.",
+        ),
         (".bye", "Exit the program."),
         (".disable-thinking", "Disable thinking."),
         (".enable-thinking", "Enable thinking."),
@@ -171,7 +181,11 @@ impl<'a> CommandParser<'a> {
         Self { text }
     }
 
-    fn next_arg(&mut self) -> Option<&'a str> {
+    fn advance(&mut self, n: usize) {
+        self.text = &self.text[n..];
+    }
+
+    fn read_word(&mut self) -> Option<&'a str> {
         if self.text.is_empty() {
             return None;
         }
@@ -186,6 +200,46 @@ impl<'a> CommandParser<'a> {
         };
 
         Some(arg)
+    }
+
+    fn next_command(&mut self) -> Option<&'a str> {
+        self.text = self.text.trim();
+        self.read_word()
+    }
+
+    fn next_arg(&mut self) -> anyhow::Result<Option<&'a str>> {
+        loop {
+            self.text = self.text.trim();
+
+            if self.text.is_empty() {
+                return Ok(None);
+            }
+
+            if self.text.starts_with('"') {
+                let mut end_index = None;
+
+                for (index, ch) in self.text.char_indices().skip(1) {
+                    if ch == '"' {
+                        // Index should be non-inclusive for indexing.
+                        end_index = Some(index + 1);
+                        break;
+                    }
+                }
+                let end_index = end_index.context("Unpaired \" in argument")?;
+                let arg = &self.text[..end_index];
+                self.advance(arg.len());
+
+                return Ok(Some(&arg[1..end_index - 1]));
+            }
+
+            let arg = match self.read_word() {
+                Some(arg) => arg,
+                None => return Ok(None),
+            };
+            if !arg.is_empty() {
+                return Ok(Some(arg));
+            }
+        }
     }
 }
 
@@ -216,6 +270,7 @@ fn main() -> anyhow::Result<()> {
         &model_path,
         EngineSettingsBackend::Cpu,
         Some(EngineSettingsBackend::Cpu),
+        Some(EngineSettingsBackend::Cpu),
     )
     .context("Failed to create engine settings")?;
     let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
@@ -236,17 +291,22 @@ fn main() -> anyhow::Result<()> {
     conversation_optional_args.set_thinking_config(&thinking_config)?;
 
     let mut show_thinking = false;
-    let mut image = None;
+    let mut image_attachment = None;
+    let mut audio_attachment = None;
     run_help_command();
     loop {
         print!("> ");
         std::io::stdout().flush()?;
         let input = read_input()?;
         let mut command_parser = CommandParser::new(input.trim());
-        let command_name = command_parser.next_arg().unwrap_or("").to_lowercase();
+        let command_name = command_parser.next_command().unwrap_or("").to_lowercase();
         match command_name.as_str() {
             ".attach" => {
-                match run_attach_command(&mut command_parser, &mut image) {
+                match run_attach_command(
+                    &mut command_parser,
+                    &mut image_attachment,
+                    &mut audio_attachment,
+                ) {
                     Ok(()) => {}
                     Err(error) => {
                         println!("Error: {error:?}");
@@ -293,9 +353,15 @@ fn main() -> anyhow::Result<()> {
         }
 
         let mut content = Vec::with_capacity(2);
-        if let Some(image) = image.take() {
+        if let Some(image) = image_attachment.take() {
             content.push(ConversationMessageContent::Image {
                 blob: Some(image),
+                path: None,
+            });
+        }
+        if let Some(audio) = audio_attachment.take() {
+            content.push(ConversationMessageContent::Audio {
+                blob: Some(audio),
                 path: None,
             });
         }
@@ -313,6 +379,7 @@ fn main() -> anyhow::Result<()> {
             .context("Failed to send message")?;
 
         let parsed = response.get_string_parsed()?;
+        dbg!(&parsed);
         if let Some(channel) = parsed.channels.get("thought")
             && show_thinking
         {
@@ -324,7 +391,10 @@ fn main() -> anyhow::Result<()> {
                     println!("< {text}");
                 }
                 ConversationMessageContent::Image { .. } => {
-                    println!("WIP: The model returned an image.");
+                    bail!("Model unexpectedly generated an image.");
+                }
+                ConversationMessageContent::Audio { .. } => {
+                    bail!("Model unexpectedly generated audio.");
                 }
             }
         }

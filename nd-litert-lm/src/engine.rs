@@ -45,6 +45,7 @@ impl EngineSettings {
         model_path: P,
         backend: EngineSettingsBackend,
         vision_backend: Option<EngineSettingsBackend>,
+        audio_backend: Option<EngineSettingsBackend>,
     ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
@@ -58,7 +59,9 @@ impl EngineSettings {
         let vision_backend = vision_backend
             .map(|backend| backend.as_cstr().as_ptr())
             .unwrap_or(std::ptr::null());
-        let audio_backend = std::ptr::null();
+        let audio_backend = audio_backend
+            .map(|backend| backend.as_cstr().as_ptr())
+            .unwrap_or(std::ptr::null());
         let mut settings: MaybeUninit<*mut LiteRtLmEngineSettings> = MaybeUninit::zeroed();
         let code = unsafe {
             litert_lm_engine_settings_create(

@@ -14,6 +14,17 @@ pub enum ConversationMessageContent {
         )]
         blob: Option<Vec<u8>>,
     },
+
+    #[serde(rename = "audio")]
+    Audio {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        path: Option<String>,
+        #[serde(
+            with = "optional_base64_bytes",
+            skip_serializing_if = "Option::is_none"
+        )]
+        blob: Option<Vec<u8>>,
+    },
 }
 
 mod optional_base64_bytes {
