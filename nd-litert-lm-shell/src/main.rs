@@ -6,7 +6,6 @@ use nd_litert_lm::Conversation;
 use nd_litert_lm::ConversationConfig;
 use nd_litert_lm::ConversationMessage;
 use nd_litert_lm::ConversationMessageContent;
-use nd_litert_lm::ConversationMessageContentType;
 use nd_litert_lm::ConversationMessageRole;
 use nd_litert_lm::ConversationOptionalArgs;
 use nd_litert_lm::Engine;
@@ -112,8 +111,40 @@ fn get_file_name_from_url(url: &str) -> anyhow::Result<String> {
     Ok(path.to_string())
 }
 
+fn run_attach_command(
+    command_parser: &mut CommandParser,
+    image_attachment: &mut Option<Vec<u8>>,
+) -> anyhow::Result<()> {
+    if image_attachment.is_some() {
+        bail!("An image is already attached");
+    }
+
+    let path = command_parser.next_arg().context(".attach needs a path")?;
+    let extension = path
+        .rsplit_once('.')
+        .map(|(_head, tail)| tail)
+        .with_context(|| format!("Path \"{path}\" is missing an extension"))?
+        .to_lowercase();
+
+    match extension.as_str() {
+        "jpg" | "jpeg" | "png" => {
+            let image_data =
+                std::fs::read(path).with_context(|| format!("Failed to read \"{path}\""))?;
+            *image_attachment = Some(image_data);
+
+            println!("Attached \"{path}\" as an image.");
+        }
+        extension => {
+            bail!("Unknown extension \"{extension}\"");
+        }
+    }
+
+    Ok(())
+}
+
 fn run_help_command() {
     let command_info = [
+        (".attach <path>", "Attach an image to the next chat."),
         (".bye", "Exit the program."),
         (".disable-thinking", "Disable thinking."),
         (".enable-thinking", "Enable thinking."),
@@ -127,6 +158,34 @@ fn run_help_command() {
     println!("Help");
     for (name, desc) in command_info {
         println!("{name}: {desc}");
+    }
+}
+
+#[derive(Debug)]
+struct CommandParser<'a> {
+    text: &'a str,
+}
+
+impl<'a> CommandParser<'a> {
+    fn new(text: &'a str) -> Self {
+        Self { text }
+    }
+
+    fn next_arg(&mut self) -> Option<&'a str> {
+        if self.text.is_empty() {
+            return None;
+        }
+
+        let optional_arg = self.text.split_once(' ');
+        let arg = match optional_arg {
+            Some((head, tail)) => {
+                self.text = tail;
+                head
+            }
+            None => std::mem::take(&mut self.text),
+        };
+
+        Some(arg)
     }
 }
 
@@ -153,8 +212,12 @@ fn main() -> anyhow::Result<()> {
     println!("Enter system message (Press Enter to skip.):");
     let system_message = read_input()?;
 
-    let engine_settings = EngineSettings::new(&model_path, EngineSettingsBackend::Cpu)
-        .context("Failed to create engine settings")?;
+    let engine_settings = EngineSettings::new(
+        &model_path,
+        EngineSettingsBackend::Cpu,
+        Some(EngineSettingsBackend::Cpu),
+    )
+    .context("Failed to create engine settings")?;
     let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
 
     let conversation_config =
@@ -173,17 +236,25 @@ fn main() -> anyhow::Result<()> {
     conversation_optional_args.set_thinking_config(&thinking_config)?;
 
     let mut show_thinking = false;
+    let mut image = None;
     run_help_command();
     loop {
         print!("> ");
         std::io::stdout().flush()?;
         let input = read_input()?;
-        let input_lowercase = input.trim().to_lowercase();
-        let first_word = input_lowercase
-            .split_once(' ')
-            .map(|(head, _tail)| head)
-            .unwrap_or(input_lowercase.as_str());
-        match first_word {
+        let mut command_parser = CommandParser::new(input.trim());
+        let command_name = command_parser.next_arg().unwrap_or("").to_lowercase();
+        match command_name.as_str() {
+            ".attach" => {
+                match run_attach_command(&mut command_parser, &mut image) {
+                    Ok(()) => {}
+                    Err(error) => {
+                        println!("Error: {error:?}");
+                    }
+                }
+
+                continue;
+            }
             ".bye" | ".exit" | ".quit" => {
                 break;
             }
@@ -212,7 +283,6 @@ fn main() -> anyhow::Result<()> {
                 println!("Thinking will be hidden.");
                 continue;
             }
-
             ".show-thinking" => {
                 show_thinking = true;
 
@@ -222,14 +292,20 @@ fn main() -> anyhow::Result<()> {
             _ => {}
         }
 
+        let mut content = Vec::with_capacity(2);
+        if let Some(image) = image.take() {
+            content.push(ConversationMessageContent::Image {
+                blob: Some(image),
+                path: None,
+            });
+        }
+        content.push(ConversationMessageContent::Text { text: input });
+
         let response = conversation
             .send_message(
                 &ConversationMessage {
                     role: ConversationMessageRole::User,
-                    content: vec![ConversationMessageContent {
-                        type_: ConversationMessageContentType::Text,
-                        text: input,
-                    }],
+                    content,
                     channels: HashMap::new(),
                 },
                 Some(&conversation_optional_args),
@@ -243,7 +319,14 @@ fn main() -> anyhow::Result<()> {
             println!("<< {channel}");
         }
         for content in parsed.content.iter() {
-            println!("< {}", content.text);
+            match content {
+                ConversationMessageContent::Text { text } => {
+                    println!("< {text}");
+                }
+                ConversationMessageContent::Image { .. } => {
+                    println!("WIP: The model returned an image.");
+                }
+            }
         }
     }
     println!("Exiting...");

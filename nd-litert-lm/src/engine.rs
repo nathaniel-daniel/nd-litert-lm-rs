@@ -41,7 +41,11 @@ impl EngineSettings {
     ///
     /// # Panics
     /// Panics if `model_path` has an interior NUL.
-    pub fn new<P>(model_path: P, backend: EngineSettingsBackend) -> Result<Self, Error>
+    pub fn new<P>(
+        model_path: P,
+        backend: EngineSettingsBackend,
+        vision_backend: Option<EngineSettingsBackend>,
+    ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -51,7 +55,9 @@ impl EngineSettings {
             .ok_or_else(|| Error::custom("model_path is not utf8"))?;
         let model_path = CString::new(model_path).expect("model_path has an interior NUL");
         let backend = backend.as_cstr();
-        let vision_backend = std::ptr::null();
+        let vision_backend = vision_backend
+            .map(|backend| backend.as_cstr().as_ptr())
+            .unwrap_or(std::ptr::null());
         let audio_backend = std::ptr::null();
         let mut settings: MaybeUninit<*mut LiteRtLmEngineSettings> = MaybeUninit::zeroed();
         let code = unsafe {

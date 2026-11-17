@@ -54,13 +54,13 @@ impl LiteRtLmStatusCode {
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct LiteRtLmStatusCode(pub ::std::os::raw::c_int);
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_get_last_error_message() -> *const ::std::os::raw::c_char;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_clear_last_error();
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_get_api_version(
         out_major: *mut ::std::os::raw::c_int,
         out_minor: *mut ::std::os::raw::c_int,
@@ -162,166 +162,166 @@ pub type LiteRtLmSpeculativeDecodingMode = ::std::os::raw::c_int;
 pub struct LiteRtLmSamplerParams {
     _unused: [u8; 0],
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_sampler_params_create(
         type_: LiteRtLmSamplerType,
         out_params: *mut *mut LiteRtLmSamplerParams,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_sampler_params_delete(params: *mut LiteRtLmSamplerParams);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_sampler_params_set_top_k(
         params: *mut LiteRtLmSamplerParams,
         top_k: i32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_sampler_params_set_top_p(
         params: *mut LiteRtLmSamplerParams,
         top_p: f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_sampler_params_set_temperature(
         params: *mut LiteRtLmSamplerParams,
         temperature: f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_sampler_params_set_seed(
         params: *mut LiteRtLmSamplerParams,
         seed: i32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_create(
         out_config: *mut *mut LiteRtLmSessionConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_max_output_tokens(
         config: *mut LiteRtLmSessionConfig,
         max_output_tokens: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_apply_prompt_template(
         config: *mut LiteRtLmSessionConfig,
         apply_prompt_template: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_enable_speculative_decoding(
         config: *mut LiteRtLmSessionConfig,
         enable_speculative_decoding: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_speculative_decoding_config_create(
         out_config: *mut *mut LiteRtLmSpeculativeDecodingConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_speculative_decoding_config_delete(
         config: *mut LiteRtLmSpeculativeDecodingConfig,
     );
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_speculative_decoding_config_set_mode(
         config: *mut LiteRtLmSpeculativeDecodingConfig,
         mode: LiteRtLmSpeculativeDecodingMode,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_speculative_decoding_config(
         config: *mut LiteRtLmSessionConfig,
         speculative_decoding_config: *const LiteRtLmSpeculativeDecodingConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_sampler_params(
         config: *mut LiteRtLmSessionConfig,
         sampler_params: *const LiteRtLmSamplerParams,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_delete(config: *mut LiteRtLmSessionConfig);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_lora_path(
         config: *mut LiteRtLmSessionConfig,
         lora_path: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_config_set_audio_lora_path(
         config: *mut LiteRtLmSessionConfig,
         audio_lora_path: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_repetition_penalty_config_create(
         out_config: *mut *mut LiteRtLmRepetitionPenaltyConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_repetition_penalty_config_delete(config: *mut LiteRtLmRepetitionPenaltyConfig);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_repetition_penalty_config_set_repetition_penalty(
         config: *mut LiteRtLmRepetitionPenaltyConfig,
         repetition_penalty: f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_repetition_penalty_config_set_presence_penalty(
         config: *mut LiteRtLmRepetitionPenaltyConfig,
         presence_penalty: f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_repetition_penalty_config_set_frequency_penalty(
         config: *mut LiteRtLmRepetitionPenaltyConfig,
         frequency_penalty: f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_repetition_penalty_config_set_window_size(
         config: *mut LiteRtLmRepetitionPenaltyConfig,
         window_size: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_no_repeat_ngram_config_create(
         out_config: *mut *mut LiteRtLmNoRepeatNgramConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_no_repeat_ngram_config_delete(config: *mut LiteRtLmNoRepeatNgramConfig);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_no_repeat_ngram_config_set_no_repeat_ngram_size(
         config: *mut LiteRtLmNoRepeatNgramConfig,
         no_repeat_ngram_size: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_no_repeat_ngram_config_set_window_size(
         config: *mut LiteRtLmNoRepeatNgramConfig,
         window_size: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_suppress_tokens_config_create(
         out_config: *mut *mut LiteRtLmSuppressTokensConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_suppress_tokens_config_delete(config: *mut LiteRtLmSuppressTokensConfig);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_suppress_tokens_config_set_suppress_tokens(
         config: *mut LiteRtLmSuppressTokensConfig,
         suppress_tokens: *const ::std::os::raw::c_int,
@@ -352,7 +352,7 @@ impl LiteRtLmLogSeverity {
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct LiteRtLmLogSeverity(pub ::std::os::raw::c_int);
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_set_min_log_level(level: LiteRtLmLogSeverity) -> LiteRtLmStatusCode;
 }
 pub const LiteRtLmInputDataType_kLiteRtLmInputDataTypeText: LiteRtLmInputDataType = 0;
@@ -361,7 +361,7 @@ pub const LiteRtLmInputDataType_kLiteRtLmInputDataTypeImageEnd: LiteRtLmInputDat
 pub const LiteRtLmInputDataType_kLiteRtLmInputDataTypeAudio: LiteRtLmInputDataType = 3;
 pub const LiteRtLmInputDataType_kLiteRtLmInputDataTypeAudioEnd: LiteRtLmInputDataType = 4;
 pub type LiteRtLmInputDataType = ::std::os::raw::c_int;
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_input_data_create(
         type_: LiteRtLmInputDataType,
         data: *const ::std::os::raw::c_void,
@@ -369,10 +369,10 @@ unsafe extern "C" {
         out_input_data: *mut *mut LiteRtLmInputData,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_input_data_delete(input_data: *mut LiteRtLmInputData);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_create(
         model_path: *const ::std::os::raw::c_char,
         backend_str: *const ::std::os::raw::c_char,
@@ -381,7 +381,7 @@ unsafe extern "C" {
         out_settings: *mut *mut LiteRtLmEngineSettings,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_create_from_raw_file_descriptor(
         fd: ::std::os::raw::c_int,
         backend_str: *const ::std::os::raw::c_char,
@@ -390,58 +390,58 @@ unsafe extern "C" {
         out_settings: *mut *mut LiteRtLmEngineSettings,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_delete(settings: *mut LiteRtLmEngineSettings);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_max_num_tokens(
         settings: *mut LiteRtLmEngineSettings,
         max_num_tokens: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_num_threads(
         settings: *mut LiteRtLmEngineSettings,
         num_threads: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_audio_num_threads(
         settings: *mut LiteRtLmEngineSettings,
         num_threads: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_parallel_file_section_loading(
         settings: *mut LiteRtLmEngineSettings,
         parallel_file_section_loading: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_single_threaded_execution(
         settings: *mut LiteRtLmEngineSettings,
         single_threaded_execution: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_max_num_images(
         settings: *mut LiteRtLmEngineSettings,
         max_num_images: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_max_vision_tokens_per_image(
         settings: *mut LiteRtLmEngineSettings,
         max_vision_tokens_per_image: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_cache_dir(
         settings: *mut LiteRtLmEngineSettings,
         cache_dir: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_litert_dispatch_lib_dir(
         settings: *mut LiteRtLmEngineSettings,
         lib_dir: *const ::std::os::raw::c_char,
@@ -456,163 +456,163 @@ pub const LiteRtLmActivationDataType_kLiteRtLmActivationDataTypeInt16: LiteRtLmA
 pub const LiteRtLmActivationDataType_kLiteRtLmActivationDataTypeInt8: LiteRtLmActivationDataType =
     3;
 pub type LiteRtLmActivationDataType = ::std::os::raw::c_int;
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_activation_data_type(
         settings: *mut LiteRtLmEngineSettings,
         activation_data_type: LiteRtLmActivationDataType,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_prefill_chunk_size(
         settings: *mut LiteRtLmEngineSettings,
         prefill_chunk_size: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_enable_ynnpack(
         settings: *mut LiteRtLmEngineSettings,
         enable_ynnpack: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_enable_benchmark(
         settings: *mut LiteRtLmEngineSettings,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_num_prefill_tokens(
         settings: *mut LiteRtLmEngineSettings,
         num_prefill_tokens: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_num_decode_tokens(
         settings: *mut LiteRtLmEngineSettings,
         num_decode_tokens: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_enable_speculative_decoding(
         settings: *mut LiteRtLmEngineSettings,
         enable_speculative_decoding: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_speculative_decoding_config(
         settings: *mut LiteRtLmEngineSettings,
         speculative_decoding_config: *const LiteRtLmSpeculativeDecodingConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_gpu_decode_steps_per_sync(
         settings: *mut LiteRtLmEngineSettings,
         num_decode_steps_per_sync: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_gpu_wait_for_weight_uploads(
         settings: *mut LiteRtLmEngineSettings,
         wait_for_weight_uploads: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_use_ringbuffers_local_attention(
         settings: *mut LiteRtLmEngineSettings,
         use_ringbuffers_local_attention: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_lora_rank(
         settings: *mut LiteRtLmEngineSettings,
         lora_rank: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_supported_lora_ranks(
         settings: *mut LiteRtLmEngineSettings,
         lora_ranks: *const ::std::os::raw::c_int,
         num_ranks: usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_audio_lora_rank(
         settings: *mut LiteRtLmEngineSettings,
         lora_rank: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_supported_audio_lora_ranks(
         settings: *mut LiteRtLmEngineSettings,
         lora_ranks: *const ::std::os::raw::c_int,
         num_ranks: usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_settings_set_gpu_enable_metal_residency_set(
         settings: *mut LiteRtLmEngineSettings,
         enable_metal_residency_set: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_create(
         settings: *const LiteRtLmEngineSettings,
         out_engine: *mut *mut LiteRtLmEngine,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_delete(engine: *mut LiteRtLmEngine);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_create_session(
         engine: *mut LiteRtLmEngine,
         config: *mut LiteRtLmSessionConfig,
         out_session: *mut *mut LiteRtLmSession,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_delete(session: *mut LiteRtLmSession);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_clone(
         session: *mut LiteRtLmSession,
         out_session: *mut *mut LiteRtLmSession,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_cancel_process(session: *mut LiteRtLmSession) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_save_checkpoint(
         session: *mut LiteRtLmSession,
         label: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_rewind_to_checkpoint(
         session: *mut LiteRtLmSession,
         label: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_rewind_to_step(
         session: *mut LiteRtLmSession,
         step: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_run_prefill(
         session: *mut LiteRtLmSession,
         inputs: *const *const LiteRtLmInputData,
         num_inputs: usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_run_decode(
         session: *mut LiteRtLmSession,
         out_responses: *mut *mut LiteRtLmResponses,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_run_text_scoring(
         session: *mut LiteRtLmSession,
         target_text: *mut *const ::std::os::raw::c_char,
@@ -621,7 +621,7 @@ unsafe extern "C" {
         out_responses: *mut *mut LiteRtLmResponses,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_generate_content(
         session: *mut LiteRtLmSession,
         inputs: *const *const LiteRtLmInputData,
@@ -629,133 +629,133 @@ unsafe extern "C" {
         out_responses: *mut *mut LiteRtLmResponses,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_delete(responses: *mut LiteRtLmResponses);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_get_num_candidates(
         responses: *const LiteRtLmResponses,
         out_num_candidates: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_get_response_text_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_text: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_has_score_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_has_score: *mut bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_get_score_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_score: *mut f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_has_token_length_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_has_token_length: *mut bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_get_token_length_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_token_length: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_has_token_scores_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_has_token_scores: *mut bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_get_num_token_scores_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_num_token_scores: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_responses_get_token_scores_at(
         responses: *const LiteRtLmResponses,
         index: usize,
         out_token_scores: *mut *const f32,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_get_benchmark_info(
         session: *mut LiteRtLmSession,
         out_benchmark_info: *mut *mut LiteRtLmBenchmarkInfo,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_delete(benchmark_info: *mut LiteRtLmBenchmarkInfo);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_time_to_first_token(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         out_seconds: *mut f64,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_total_init_time_in_second(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         out_seconds: *mut f64,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_num_prefill_turns(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         out_num_turns: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_num_decode_turns(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         out_num_turns: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_prefill_token_count_at(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         index: usize,
         out_token_count: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_decode_token_count_at(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         index: usize,
         out_token_count: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_prefill_tokens_per_sec_at(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         index: usize,
         out_tokens_per_sec: *mut f64,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_decode_tokens_per_sec_at(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         index: usize,
         out_tokens_per_sec: *mut f64,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_benchmark_info_get_max_num_tokens(
         benchmark_info: *const LiteRtLmBenchmarkInfo,
         out_max_num_tokens: *mut ::std::os::raw::c_int,
@@ -766,19 +766,19 @@ unsafe extern "C" {
 pub struct LiteRtLmStreamChunk {
     _unused: [u8; 0],
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_stream_chunk_get_text(
         chunk: *const LiteRtLmStreamChunk,
         out_text: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_stream_chunk_is_final(
         chunk: *const LiteRtLmStreamChunk,
         out_is_final: *mut bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_stream_chunk_get_error(
         chunk: *const LiteRtLmStreamChunk,
         out_error: *mut *const ::std::os::raw::c_char,
@@ -790,14 +790,14 @@ pub type LiteRtLmStreamCallback = ::std::option::Option<
         chunk: *const LiteRtLmStreamChunk,
     ),
 >;
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_run_decode_async(
         session: *mut LiteRtLmSession,
         callback: LiteRtLmStreamCallback,
         callback_data: *mut ::std::os::raw::c_void,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_session_generate_content_stream(
         session: *mut LiteRtLmSession,
         inputs: *const *const LiteRtLmInputData,
@@ -806,29 +806,29 @@ unsafe extern "C" {
         callback_data: *mut ::std::os::raw::c_void,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_tokenize(
         engine: *mut LiteRtLmEngine,
         text: *const ::std::os::raw::c_char,
         out_result: *mut *mut LiteRtLmTokenizeResult,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_tokenize_result_delete(result: *mut LiteRtLmTokenizeResult);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_tokenize_result_get_tokens(
         result: *const LiteRtLmTokenizeResult,
         out_tokens: *mut *const ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_tokenize_result_get_num_tokens(
         result: *const LiteRtLmTokenizeResult,
         out_num_tokens: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_detokenize(
         engine: *mut LiteRtLmEngine,
         tokens: *const ::std::os::raw::c_int,
@@ -836,60 +836,60 @@ unsafe extern "C" {
         out_result: *mut *mut LiteRtLmDetokenizeResult,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_detokenize_result_delete(result: *mut LiteRtLmDetokenizeResult);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_detokenize_result_get_string(
         result: *const LiteRtLmDetokenizeResult,
         out_text: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_union_delete(token_union: *mut LiteRtLmTokenUnion);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_union_get_type(
         token_union: *const LiteRtLmTokenUnion,
         out_type: *mut LiteRtLmTokenUnionType,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_union_get_string(
         token_union: *const LiteRtLmTokenUnion,
         out_string: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_union_get_ids(
         token_union: *const LiteRtLmTokenUnion,
         out_tokens: *mut *const ::std::os::raw::c_int,
         out_num_tokens: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_unions_delete(tokens: *mut LiteRtLmTokenUnions);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_unions_get_num_tokens(
         tokens: *const LiteRtLmTokenUnions,
         out_num_tokens: *mut usize,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_token_unions_get_token_at(
         tokens: *const LiteRtLmTokenUnions,
         index: usize,
         out_token: *mut *const LiteRtLmTokenUnion,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_get_start_token(
         engine: *mut LiteRtLmEngine,
         out_token: *mut *mut LiteRtLmTokenUnion,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_engine_get_stop_tokens(
         engine: *mut LiteRtLmEngine,
         out_tokens: *mut *mut LiteRtLmTokenUnions,
@@ -929,171 +929,171 @@ pub const LiteRtLmConstraintProviderType_kLiteRtLmConstraintProviderTypeNone:
 pub const LiteRtLmConstraintProviderType_kLiteRtLmConstraintProviderTypeLlGuidance:
     LiteRtLmConstraintProviderType = 1;
 pub type LiteRtLmConstraintProviderType = ::std::os::raw::c_int;
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_create(
         out_config: *mut *mut LiteRtLmConversationConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_session_config(
         config: *mut LiteRtLmConversationConfig,
         session_config: *const LiteRtLmSessionConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_system_message(
         config: *mut LiteRtLmConversationConfig,
         system_message_json: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_tools(
         config: *mut LiteRtLmConversationConfig,
         tools_json: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_messages(
         config: *mut LiteRtLmConversationConfig,
         messages_json: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_extra_context(
         config: *mut LiteRtLmConversationConfig,
         extra_context_json: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_prompt_template(
         config: *mut LiteRtLmConversationConfig,
         prompt_template: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_enable_constrained_decoding(
         config: *mut LiteRtLmConversationConfig,
         enable_constrained_decoding: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_constraint_provider(
         config: *mut LiteRtLmConversationConfig,
         provider_type: LiteRtLmConstraintProviderType,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_filter_channel_content_from_kv_cache(
         config: *mut LiteRtLmConversationConfig,
         filter_channel_content_from_kv_cache: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_stream_tool_calls(
         config: *mut LiteRtLmConversationConfig,
         stream_tool_calls: bool,
         channel_name: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_thinking_config_create(
         out_config: *mut *mut LiteRtLmThinkingConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_thinking_config_delete(config: *mut LiteRtLmThinkingConfig);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_thinking_config_set_enable_thinking(
         config: *mut LiteRtLmThinkingConfig,
         enable_thinking: bool,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_thinking_config_set_thinking_token_budget(
         config: *mut LiteRtLmThinkingConfig,
         thinking_token_budget: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_set_thinking_config(
         config: *mut LiteRtLmConversationConfig,
         thinking_config: *const LiteRtLmThinkingConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_config_delete(config: *mut LiteRtLmConversationConfig);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_create(
         out_optional_args: *mut *mut LiteRtLmConversationOptionalArgs,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_delete(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
     );
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_repetition_penalty_config(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         repetition_penalty_config: *const LiteRtLmRepetitionPenaltyConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_no_repeat_ngram_config(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         no_repeat_ngram_config: *const LiteRtLmNoRepeatNgramConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_suppress_tokens_config(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         suppress_tokens_config: *const LiteRtLmSuppressTokensConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_visual_token_budget(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         visual_token_budget: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_max_output_tokens(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         max_output_tokens: ::std::os::raw::c_int,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_thinking_config(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         thinking_config: *const LiteRtLmThinkingConfig,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_optional_args_set_constraint(
         optional_args: *mut LiteRtLmConversationOptionalArgs,
         constraint_type: LiteRtLmConstraintType,
         constraint_string: *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_create(
         engine: *mut LiteRtLmEngine,
         config: *mut LiteRtLmConversationConfig,
         out_conversation: *mut *mut LiteRtLmConversation,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_delete(conversation: *mut LiteRtLmConversation);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_clone(
         conversation: *mut LiteRtLmConversation,
         out_conversation: *mut *mut LiteRtLmConversation,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_send_message(
         conversation: *mut LiteRtLmConversation,
         message_json: *const ::std::os::raw::c_char,
@@ -1102,16 +1102,16 @@ unsafe extern "C" {
         out_response: *mut *mut LiteRtLmJsonResponse,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_json_response_delete(response: *mut LiteRtLmJsonResponse);
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_json_response_get_string(
         response: *const LiteRtLmJsonResponse,
         out_json: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_send_message_stream(
         conversation: *mut LiteRtLmConversation,
         message_json: *const ::std::os::raw::c_char,
@@ -1121,36 +1121,36 @@ unsafe extern "C" {
         callback_data: *mut ::std::os::raw::c_void,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_render_message_to_string(
         conversation: *mut LiteRtLmConversation,
         message_json: *const ::std::os::raw::c_char,
         out_text: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_render_preface_to_string(
         conversation: *mut LiteRtLmConversation,
         out_text: *mut *const ::std::os::raw::c_char,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_cancel_process(
         conversation: *mut LiteRtLmConversation,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_wait_until_done(
         conversation: *mut LiteRtLmConversation,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_get_benchmark_info(
         conversation: *mut LiteRtLmConversation,
         out_benchmark_info: *mut *mut LiteRtLmBenchmarkInfo,
     ) -> LiteRtLmStatusCode;
 }
-unsafe extern "C" {
+unsafe extern "C-unwind" {
     pub fn litert_lm_conversation_get_token_count(
         conversation: *mut LiteRtLmConversation,
         out_count: *mut usize,

@@ -7,7 +7,6 @@ pub use self::conversation::Conversation;
 pub use self::conversation::ConversationConfig;
 pub use self::conversation::ConversationMessage;
 pub use self::conversation::ConversationMessageContent;
-pub use self::conversation::ConversationMessageContentType;
 pub use self::conversation::ConversationMessageRole;
 pub use self::conversation::ConversationOptionalArgs;
 pub use self::conversation::ThinkingConfig;

@@ -1,3 +1,6 @@
+mod message;
+
+pub use self::message::ConversationMessageContent;
 use crate::Engine;
 use crate::Error;
 use nd_litert_lm_sys::LiteRtLmConversation;
@@ -126,19 +129,6 @@ impl Drop for ConversationConfig {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize, serde::Serialize)]
-pub enum ConversationMessageContentType {
-    #[serde(rename = "text")]
-    Text,
-}
-
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct ConversationMessageContent {
-    #[serde(rename = "type")]
-    pub type_: ConversationMessageContentType,
-    pub text: String,
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize, serde::Serialize)]
 pub enum ConversationMessageRole {
     #[serde(rename = "system")]
     System,
@@ -226,6 +216,29 @@ impl<'a> Conversation<'a> {
         message: &ConversationMessage,
         optional_args: Option<&ConversationOptionalArgs>,
     ) -> Result<JsonResponse, Error> {
+        // As of 2026-11-16, the C library actually throws an exception if we don't validate this here.
+        if message.content.iter().any(|content| {
+            matches!(
+                content,
+                ConversationMessageContent::Image {
+                    path: None,
+                    blob: None
+                }
+            )
+        }) || message.content.iter().any(|content| {
+            matches!(
+                content,
+                ConversationMessageContent::Image {
+                    path: Some(_),
+                    blob: Some(_)
+                }
+            )
+        }) {
+            return Err(Error::custom(
+                "ConversationMessageContent must either specify blob or path.",
+            ));
+        }
+
         let message_json = serde_json::to_string(message).map_err(|error| {
             Error::custom_with_error("Failed to serialize message to JSON", error)
         })?;

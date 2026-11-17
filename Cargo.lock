@@ -566,6 +566,7 @@ dependencies = [
 name = "nd-litert-lm"
 version = "0.0.0"
 dependencies = [
+ "base64",
  "nd-litert-lm-sys",
  "serde",
  "serde_json",
