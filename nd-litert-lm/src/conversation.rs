@@ -5,6 +5,8 @@ pub use self::message::ConversationMessageContent;
 pub use self::message::ConversationMessageRole;
 pub use self::message::ToolCall as ConversationToolCall;
 pub use self::tool::FunctionParameters;
+pub use self::tool::Property as ToolProperty;
+pub use self::tool::Tool;
 use crate::Engine;
 use crate::Error;
 use nd_litert_lm_sys::LiteRtLmConversation;
@@ -69,20 +71,6 @@ impl Drop for ThinkingConfig {
     fn drop(&mut self) {
         unsafe { litert_lm_thinking_config_delete(self.ptr) }
     }
-}
-
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-pub struct ToolFunction {
-    pub name: String,
-    pub description: String,
-    pub parameters: FunctionParameters,
-}
-
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-#[serde(tag = "type")]
-pub enum Tool {
-    #[serde(rename = "function")]
-    Function { function: ToolFunction },
 }
 
 #[derive(Debug)]

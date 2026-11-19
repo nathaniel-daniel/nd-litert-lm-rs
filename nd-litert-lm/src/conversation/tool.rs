@@ -44,7 +44,7 @@ impl<'de> serde::Deserialize<'de> for FunctionParameters {
         D: serde::Deserializer<'de>,
     {
         #[derive(serde::Deserialize)]
-        struct FunctionParameters {
+        struct FunctionParametersJson {
             type_: String,
 
             #[serde(default)]
@@ -54,7 +54,7 @@ impl<'de> serde::Deserialize<'de> for FunctionParameters {
             required: Vec<String>,
         }
 
-        let json = FunctionParameters::deserialize(deserializer)?;
+        let json = FunctionParametersJson::deserialize(deserializer)?;
         if json.type_ != "function" {
             return Err(D::Error::custom("\"type_\" field should be \"object\""));
         }
@@ -72,7 +72,7 @@ impl serde::Serialize for FunctionParameters {
         S: serde::Serializer,
     {
         #[derive(serde::Serialize)]
-        struct FunctionParameters<'a> {
+        struct FunctionParametersJson<'a> {
             type_: &'static str,
 
             #[serde(default)]
@@ -82,10 +82,80 @@ impl serde::Serialize for FunctionParameters {
             required: &'a Vec<String>,
         }
 
-        let json = FunctionParameters {
+        let json = FunctionParametersJson {
             type_: "object",
             properties: &self.properties,
             required: &self.required,
+        };
+
+        json.serialize(serializer)
+    }
+}
+
+#[derive(Debug)]
+pub struct Tool {
+    pub name: String,
+    pub description: String,
+    pub parameters: FunctionParameters,
+}
+
+impl<'de> serde::Deserialize<'de> for Tool {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(serde::Deserialize)]
+        struct ToolFunctionJson {
+            name: String,
+            description: String,
+            parameters: FunctionParameters,
+        }
+
+        #[derive(serde::Deserialize)]
+        struct ToolJson {
+            type_: String,
+            function: ToolFunctionJson,
+        }
+
+        let json = ToolJson::deserialize(deserializer)?;
+        if json.type_ != "function" {
+            return Err(D::Error::custom("\"type_\" field should be \"function\""));
+        }
+
+        Ok(Self {
+            name: json.function.name,
+            description: json.function.description,
+            parameters: json.function.parameters,
+        })
+    }
+}
+
+impl serde::Serialize for Tool {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        #[derive(serde::Serialize)]
+        struct ToolFunctionJson<'a> {
+            name: &'a str,
+            description: &'a str,
+            parameters: &'a FunctionParameters,
+        }
+
+        #[derive(serde::Serialize)]
+        struct ToolJson<'a> {
+            type_: &'static str,
+
+            function: ToolFunctionJson<'a>,
+        }
+
+        let json = ToolJson {
+            type_: "function",
+            function: ToolFunctionJson {
+                name: &self.name,
+                description: &self.description,
+                parameters: &self.parameters,
+            },
         };
 
         json.serialize(serializer)

@@ -49,7 +49,7 @@ pub enum ConversationMessageContent {
     #[serde(rename = "tool_response")]
     ToolResponse {
         name: String,
-        response: HashMap<String, String>,
+        response: serde_json::Value,
     },
 }
 

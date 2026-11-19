@@ -11,7 +11,7 @@ use nd_litert_lm::ConversationMessageContent;
 use nd_litert_lm::ConversationMessageRole;
 use nd_litert_lm::ConversationOptionalArgs;
 use nd_litert_lm::ConversationTool;
-use nd_litert_lm::ConversationToolFunction;
+use nd_litert_lm::ConversationToolProperty;
 use nd_litert_lm::Engine;
 use nd_litert_lm::EngineSettings;
 use nd_litert_lm::EngineSettingsBackend;
@@ -285,8 +285,8 @@ fn main() -> anyhow::Result<()> {
         conversation_config.set_system_message(system_message.as_str())?;
         println!("System prompt set.");
     }
-    conversation_config.set_tools(&[ConversationTool::Function {
-        function: ConversationToolFunction {
+    conversation_config.set_tools(&[
+        ConversationTool {
             name: "get_time".to_string(),
             description: "Get the current time.".to_string(),
             parameters: ConversationFunctionParameters {
@@ -294,7 +294,52 @@ fn main() -> anyhow::Result<()> {
                 required: Vec::new(),
             },
         },
-    }])?;
+        ConversationTool {
+            name: "read_dir".to_string(),
+            description: "Read a dir.".to_string(),
+            parameters: ConversationFunctionParameters {
+                properties: {
+                    let mut map = HashMap::new();
+                    map.insert(
+                        "path".to_string(),
+                        ConversationToolProperty::String { description: None },
+                    );
+                    map
+                },
+                required: Vec::new(),
+            },
+        },
+        ConversationTool {
+            name: "read_file".to_string(),
+            description: "Read a text file.".to_string(),
+            parameters: ConversationFunctionParameters {
+                properties: {
+                    let mut map = HashMap::new();
+                    map.insert(
+                        "path".to_string(),
+                        ConversationToolProperty::String { description: None },
+                    );
+                    map
+                },
+                required: Vec::new(),
+            },
+        },
+        ConversationTool {
+            name: "pwd".to_string(),
+            description: "Get the current dir.".to_string(),
+            parameters: ConversationFunctionParameters {
+                properties: {
+                    let mut map = HashMap::new();
+                    map.insert(
+                        "path".to_string(),
+                        ConversationToolProperty::String { description: None },
+                    );
+                    map
+                },
+                required: Vec::new(),
+            },
+        },
+    ])?;
     let conversation = Conversation::new(&engine, &conversation_config)
         .context("Failed to create conversation")?;
 
@@ -413,12 +458,39 @@ fn main() -> anyhow::Result<()> {
                 let response = match tool_name {
                     "get_time" => {
                         let now = jiff::ZonedDateTime::now();
-                        let mut response = HashMap::new();
-                        response.insert("time_rfc_9557".to_string(), now.to_string());
-                        response
+                        serde_json::Value::String(now.to_string())
                     }
-                    "list_dir" => {
-                        todo!()
+                    "read_dir" => {
+                        let path = tool_call
+                            .arguments
+                            .get("path")
+                            .map(|path| path.as_str())
+                            .unwrap_or(".");
+                        let mut files = Vec::new();
+                        for entry in std::fs::read_dir(path)? {
+                            let entry = entry?;
+                            let file_name = entry
+                                .file_name()
+                                .into_string()
+                                .ok()
+                                .context("File name is not unicode")?;
+                            files.push(file_name);
+                        }
+                        serde_json::to_value(&files)?
+                    }
+                    "read_file" => {
+                        let path = tool_call
+                            .arguments
+                            .get("path")
+                            .map(|path| path.as_str())
+                            .unwrap_or(".");
+                        let value = std::fs::read_to_string(path)?;
+                        value.into()
+                    }
+                    "pwd" => {
+                        let pwd = std::env::current_dir()?;
+                        let pwd = pwd.into_string().ok().context("Path is not unicode")?;
+                        pwd.into()
                     }
                     _ => bail!("Unknown tool \"{tool_name}\""),
                 };

@@ -12,7 +12,7 @@ pub use self::conversation::ConversationOptionalArgs;
 pub use self::conversation::FunctionParameters as ConversationFunctionParameters;
 pub use self::conversation::ThinkingConfig;
 pub use self::conversation::Tool as ConversationTool;
-pub use self::conversation::ToolFunction as ConversationToolFunction;
+pub use self::conversation::ToolProperty as ConversationToolProperty;
 pub use self::engine::Engine;
 pub use self::engine::EngineSettings;
 pub use self::engine::EngineSettingsBackend;
@@ -21,6 +21,7 @@ pub use self::version::get_api_version;
 use nd_litert_lm_sys::LiteRtLmLogSeverity;
 use nd_litert_lm_sys::LiteRtLmStatusCode;
 use nd_litert_lm_sys::litert_lm_set_min_log_level;
+pub use serde_json::Value;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum LogSeverity {
