@@ -277,6 +277,7 @@ fn main() -> anyhow::Result<()> {
         Some(EngineSettingsBackend::Cpu),
     )
     .context("Failed to create engine settings")?;
+    engine_settings.set_max_num_tokens(32_768)?;
     let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
 
     let conversation_config =

@@ -6,6 +6,7 @@ use nd_litert_lm_sys::litert_lm_engine_create;
 use nd_litert_lm_sys::litert_lm_engine_delete;
 use nd_litert_lm_sys::litert_lm_engine_settings_create;
 use nd_litert_lm_sys::litert_lm_engine_settings_delete;
+use nd_litert_lm_sys::litert_lm_engine_settings_set_max_num_tokens;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::mem::MaybeUninit;
@@ -78,6 +79,20 @@ impl EngineSettings {
         let ptr = unsafe { settings.assume_init() };
 
         Ok(Self { ptr })
+    }
+
+    /// Set the max tokens for an engine.
+    pub fn set_max_num_tokens(&self, max_num_tokens: u32) -> Result<(), Error> {
+        let max_num_tokens = i32::try_from(max_num_tokens)
+            .map_err(|error| Error::custom_with_error("max_num_tokens is too large", error))?;
+
+        let code =
+            unsafe { litert_lm_engine_settings_set_max_num_tokens(self.ptr, max_num_tokens) };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+
+        Ok(())
     }
 }
 
