@@ -1,8 +1,10 @@
 mod message;
+mod tool;
 
 pub use self::message::ConversationMessageContent;
 pub use self::message::ConversationMessageRole;
 pub use self::message::ToolCall as ConversationToolCall;
+pub use self::tool::FunctionParameters;
 use crate::Engine;
 use crate::Error;
 use nd_litert_lm_sys::LiteRtLmConversation;
@@ -67,49 +69,6 @@ impl Drop for ThinkingConfig {
     fn drop(&mut self) {
         unsafe { litert_lm_thinking_config_delete(self.ptr) }
     }
-}
-
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-#[serde(tag = "type")]
-pub enum Property {
-    #[serde(rename = "string")]
-    String { description: Option<String> },
-
-    #[serde(rename = "integer")]
-    Integer { description: Option<String> },
-
-    #[serde(rename = "number")]
-    Number { description: Option<String> },
-
-    #[serde(rename = "boolean")]
-    Boolean { description: Option<String> },
-
-    #[serde(rename = "array")]
-    Array {
-        description: Option<String>,
-        items: Box<Property>,
-    },
-
-    #[serde(rename = "object")]
-    Object {
-        description: Option<String>,
-        properties: HashMap<String, Property>,
-    },
-}
-
-#[derive(Debug, serde::Deserialize, serde::Serialize)]
-#[serde(tag = "type")]
-pub enum FunctionParameters {
-    #[serde(rename = "object")]
-    Object {
-        /// Properties
-        #[serde(default)]
-        properties: HashMap<String, Property>,
-
-        /// The list of names of required parameters.
-        #[serde(default)]
-        required: Vec<String>,
-    },
 }
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]

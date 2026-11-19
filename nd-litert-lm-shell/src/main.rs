@@ -288,8 +288,8 @@ fn main() -> anyhow::Result<()> {
     conversation_config.set_tools(&[ConversationTool::Function {
         function: ConversationToolFunction {
             name: "get_time".to_string(),
-            description: "Get the current time".to_string(),
-            parameters: ConversationFunctionParameters::Object {
+            description: "Get the current time.".to_string(),
+            parameters: ConversationFunctionParameters {
                 properties: HashMap::new(),
                 required: Vec::new(),
             },
@@ -417,12 +417,15 @@ fn main() -> anyhow::Result<()> {
                         response.insert("time_rfc_9557".to_string(), now.to_string());
                         response
                     }
+                    "list_dir" => {
+                        todo!()
+                    }
                     _ => bail!("Unknown tool \"{tool_name}\""),
                 };
-                
+
                 if show_thinking {
                     let response_json = serde_json::to_string(&response)?;
-                    
+
                     print!("<< {}", tool_call.name);
                     print!("(");
                     let num_args = tool_call.arguments.len();
@@ -435,7 +438,7 @@ fn main() -> anyhow::Result<()> {
                     print!(") = {response_json}");
                     println!();
                 }
-                
+
                 tool_responses.push(ConversationMessageContent::ToolResponse {
                     name: tool_name.to_string(),
                     response,
