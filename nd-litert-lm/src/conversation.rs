@@ -1,6 +1,8 @@
 mod message;
 
 pub use self::message::ConversationMessageContent;
+pub use self::message::ConversationMessageRole;
+pub use self::message::ToolCall as ConversationToolCall;
 use crate::Engine;
 use crate::Error;
 use nd_litert_lm_sys::LiteRtLmConversation;
@@ -11,8 +13,10 @@ use nd_litert_lm_sys::LiteRtLmStatusCode;
 use nd_litert_lm_sys::LiteRtLmThinkingConfig;
 use nd_litert_lm_sys::litert_lm_conversation_config_create;
 use nd_litert_lm_sys::litert_lm_conversation_config_delete;
+use nd_litert_lm_sys::litert_lm_conversation_config_set_prompt_template;
 use nd_litert_lm_sys::litert_lm_conversation_config_set_system_message;
 use nd_litert_lm_sys::litert_lm_conversation_config_set_thinking_config;
+use nd_litert_lm_sys::litert_lm_conversation_config_set_tools;
 use nd_litert_lm_sys::litert_lm_conversation_create;
 use nd_litert_lm_sys::litert_lm_conversation_delete;
 use nd_litert_lm_sys::litert_lm_conversation_optional_args_create;
@@ -65,6 +69,63 @@ impl Drop for ThinkingConfig {
     }
 }
 
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum Property {
+    #[serde(rename = "string")]
+    String { description: Option<String> },
+
+    #[serde(rename = "integer")]
+    Integer { description: Option<String> },
+
+    #[serde(rename = "number")]
+    Number { description: Option<String> },
+
+    #[serde(rename = "boolean")]
+    Boolean { description: Option<String> },
+
+    #[serde(rename = "array")]
+    Array {
+        description: Option<String>,
+        items: Box<Property>,
+    },
+
+    #[serde(rename = "object")]
+    Object {
+        description: Option<String>,
+        properties: HashMap<String, Property>,
+    },
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum FunctionParameters {
+    #[serde(rename = "object")]
+    Object {
+        /// Properties
+        #[serde(default)]
+        properties: HashMap<String, Property>,
+
+        /// The list of names of required parameters.
+        #[serde(default)]
+        required: Vec<String>,
+    },
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct ToolFunction {
+    pub name: String,
+    pub description: String,
+    pub parameters: FunctionParameters,
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+#[serde(tag = "type")]
+pub enum Tool {
+    #[serde(rename = "function")]
+    Function { function: ToolFunction },
+}
+
 #[derive(Debug)]
 pub struct ConversationConfig {
     ptr: *mut LiteRtLmConversationConfig,
@@ -82,6 +143,20 @@ impl ConversationConfig {
         let ptr = unsafe { config.assume_init() };
 
         Ok(Self { ptr })
+    }
+
+    /// Set the prompt template.
+    pub fn set_prompt_template(&self, prompt_template: &str) -> Result<(), Error> {
+        let prompt_template = CString::new(prompt_template).map_err(|error| {
+            Error::custom_with_error("prompt_template contains an interior nul", error)
+        })?;
+        let code = unsafe {
+            litert_lm_conversation_config_set_prompt_template(self.ptr, prompt_template.as_ptr())
+        };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+        Ok(())
     }
 
     /// Set the system message.
@@ -120,6 +195,20 @@ impl ConversationConfig {
         }
         Ok(())
     }
+
+    /// Set the tools.
+    pub fn set_tools(&self, tools: &[Tool]) -> Result<(), Error> {
+        let tools = serde_json::to_string(tools)
+            .map_err(|error| Error::custom_with_error("Failed to serialize tools", error))?;
+        let tools = CString::new(tools).map_err(|error| {
+            Error::custom_with_error("Tools json contained an interior nul", error)
+        })?;
+        let code = unsafe { litert_lm_conversation_config_set_tools(self.ptr, tools.as_ptr()) };
+        if code != LiteRtLmStatusCode::kLiteRtLmStatusOk {
+            return Err(Error::last_error_clear());
+        }
+        Ok(())
+    }
 }
 
 impl Drop for ConversationConfig {
@@ -128,25 +217,17 @@ impl Drop for ConversationConfig {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, serde::Deserialize, serde::Serialize)]
-pub enum ConversationMessageRole {
-    #[serde(rename = "system")]
-    System,
-
-    #[serde(rename = "user")]
-    User,
-
-    #[serde(rename = "assistant")]
-    Model,
-
-    #[serde(rename = "tool")]
-    Tool,
-}
-
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ConversationMessage {
     pub role: ConversationMessageRole,
+
+    /// This can be empty if the model attempts a tool call.
+    #[serde(default)]
     pub content: Vec<ConversationMessageContent>,
+
+    #[serde(default)]
+    pub tool_calls: Vec<ConversationToolCall>,
+
     // This should only be specified for response messages.
     #[serde(default)]
     pub channels: HashMap<String, String>,
@@ -235,7 +316,28 @@ impl<'a> Conversation<'a> {
             )
         }) {
             return Err(Error::custom(
-                "ConversationMessageContent must either specify blob or path.",
+                "ConversationMessageContent::Image must either specify blob or path.",
+            ));
+        }
+        if message.content.iter().any(|content| {
+            matches!(
+                content,
+                ConversationMessageContent::Audio {
+                    path: None,
+                    blob: None
+                }
+            )
+        }) || message.content.iter().any(|content| {
+            matches!(
+                content,
+                ConversationMessageContent::Audio {
+                    path: Some(_),
+                    blob: Some(_)
+                }
+            )
+        }) {
+            return Err(Error::custom(
+                "ConversationMessageContent::Audio must either specify blob or path.",
             ));
         }
 

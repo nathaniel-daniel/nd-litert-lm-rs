@@ -1,13 +1,17 @@
 use anyhow::Context;
 use anyhow::bail;
+use anyhow::ensure;
 use etcetera::AppStrategy;
 use etcetera::AppStrategyArgs;
 use nd_litert_lm::Conversation;
 use nd_litert_lm::ConversationConfig;
+use nd_litert_lm::ConversationFunctionParameters;
 use nd_litert_lm::ConversationMessage;
 use nd_litert_lm::ConversationMessageContent;
 use nd_litert_lm::ConversationMessageRole;
 use nd_litert_lm::ConversationOptionalArgs;
+use nd_litert_lm::ConversationTool;
+use nd_litert_lm::ConversationToolFunction;
 use nd_litert_lm::Engine;
 use nd_litert_lm::EngineSettings;
 use nd_litert_lm::EngineSettingsBackend;
@@ -281,6 +285,16 @@ fn main() -> anyhow::Result<()> {
         conversation_config.set_system_message(system_message.as_str())?;
         println!("System prompt set.");
     }
+    conversation_config.set_tools(&[ConversationTool::Function {
+        function: ConversationToolFunction {
+            name: "get_time".to_string(),
+            description: "Get the current time".to_string(),
+            parameters: ConversationFunctionParameters::Object {
+                properties: HashMap::new(),
+                required: Vec::new(),
+            },
+        },
+    }])?;
     let conversation = Conversation::new(&engine, &conversation_config)
         .context("Failed to create conversation")?;
 
@@ -352,7 +366,7 @@ fn main() -> anyhow::Result<()> {
             _ => {}
         }
 
-        let mut content = Vec::with_capacity(2);
+        let mut content = Vec::with_capacity(3);
         if let Some(image) = image_attachment.take() {
             content.push(ConversationMessageContent::Image {
                 blob: Some(image),
@@ -367,24 +381,79 @@ fn main() -> anyhow::Result<()> {
         }
         content.push(ConversationMessageContent::Text { text: input });
 
-        let response = conversation
+        let mut response = conversation
             .send_message(
                 &ConversationMessage {
                     role: ConversationMessageRole::User,
                     content,
+                    tool_calls: Vec::new(),
                     channels: HashMap::new(),
                 },
                 Some(&conversation_optional_args),
             )
             .context("Failed to send message")?;
 
-        let parsed = response.get_string_parsed()?;
-        dbg!(&parsed);
-        if let Some(channel) = parsed.channels.get("thought")
-            && show_thinking
-        {
-            println!("<< {channel}");
-        }
+        let parsed = loop {
+            let parsed = response.get_string_parsed()?;
+            if let Some(channel) = parsed.channels.get("thought")
+                && show_thinking
+            {
+                println!("<< {channel}");
+            }
+
+            ensure!(parsed.content.is_empty() ^ parsed.tool_calls.is_empty());
+
+            if !parsed.content.is_empty() {
+                break parsed;
+            }
+
+            let mut tool_responses = Vec::with_capacity(parsed.tool_calls.len());
+            for tool_call in parsed.tool_calls.iter() {
+                let tool_name = tool_call.name.as_str();
+                let response = match tool_name {
+                    "get_time" => {
+                        let now = jiff::ZonedDateTime::now();
+                        let mut response = HashMap::new();
+                        response.insert("time_rfc_9557".to_string(), now.to_string());
+                        response
+                    }
+                    _ => bail!("Unknown tool \"{tool_name}\""),
+                };
+                
+                if show_thinking {
+                    let response_json = serde_json::to_string(&response)?;
+                    
+                    print!("<< {}", tool_call.name);
+                    print!("(");
+                    let num_args = tool_call.arguments.len();
+                    for (i, (key, value)) in tool_call.arguments.iter().enumerate() {
+                        print!("{key}={value:?}");
+                        if i + 1 != num_args {
+                            print!(", ");
+                        }
+                    }
+                    print!(") = {response_json}");
+                    println!();
+                }
+                
+                tool_responses.push(ConversationMessageContent::ToolResponse {
+                    name: tool_name.to_string(),
+                    response,
+                });
+            }
+
+            response = conversation
+                .send_message(
+                    &ConversationMessage {
+                        role: ConversationMessageRole::Tool,
+                        content: tool_responses,
+                        tool_calls: Vec::new(),
+                        channels: HashMap::new(),
+                    },
+                    Some(&conversation_optional_args),
+                )
+                .context("Failed to send message")?;
+        };
         for content in parsed.content.iter() {
             match content {
                 ConversationMessageContent::Text { text } => {
@@ -395,6 +464,9 @@ fn main() -> anyhow::Result<()> {
                 }
                 ConversationMessageContent::Audio { .. } => {
                     bail!("Model unexpectedly generated audio.");
+                }
+                ConversationMessageContent::ToolResponse { .. } => {
+                    bail!("Model unexpectedly generated a tool response.");
                 }
             }
         }
