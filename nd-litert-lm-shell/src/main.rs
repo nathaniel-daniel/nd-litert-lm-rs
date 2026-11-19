@@ -1,3 +1,9 @@
+mod tools;
+mod util;
+
+use crate::util::get_file_name_from_url;
+use crate::util::read_input;
+use crate::util::read_input_yn;
 use anyhow::Context;
 use anyhow::bail;
 use anyhow::ensure;
@@ -24,7 +30,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
-use url::Url;
 
 // const MODEL_URL: &str = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-gpu.litertlm?download=true";
 const MODEL_URL: &str = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true";
@@ -49,32 +54,6 @@ fn get_app_paths() -> anyhow::Result<&'static AppPaths> {
 
         anyhow::Ok(AppPaths { cache_dir })
     })
-}
-
-fn read_input() -> anyhow::Result<String> {
-    let mut input = String::new();
-
-    std::io::stdin()
-        .read_line(&mut input)
-        .context("Failed to read stdin")?;
-    if input.ends_with("\r\n") {
-        input.pop();
-        input.pop();
-    }
-    if input.ends_with("\n") {
-        input.pop();
-    }
-
-    Ok(input)
-}
-
-fn read_input_yn() -> anyhow::Result<bool> {
-    let input = read_input()?;
-    match input.to_lowercase().as_str() {
-        "yes" | "y" => Ok(true),
-        "no" | "n" => Ok(false),
-        _ => bail!("\"{input}\" is not recognized"),
-    }
 }
 
 fn download_to_path_cli(url: &str, path: impl AsRef<Path>) -> anyhow::Result<()> {
@@ -103,16 +82,6 @@ fn download_to_path_cli(url: &str, path: impl AsRef<Path>) -> anyhow::Result<()>
     std::fs::rename(temp_path, path)?;
 
     Ok(())
-}
-
-fn get_file_name_from_url(url: &str) -> anyhow::Result<String> {
-    let url = Url::parse(url).context("Failed to parse url")?;
-    let path = url
-        .path_segments()
-        .context("Url missing path")?
-        .next_back()
-        .context("Missing file name")?;
-    Ok(path.to_string())
 }
 
 fn run_attach_command(
@@ -247,45 +216,7 @@ impl<'a> CommandParser<'a> {
     }
 }
 
-fn main() -> anyhow::Result<()> {
-    let api_version = get_api_version().context("Failed to get api version")?;
-    println!("Lite-RT-LM Version: {api_version}");
-    nd_litert_lm::set_min_log_level(LogSeverity::Silent)?;
-
-    let app_paths = get_app_paths()?;
-    let model_file_name = get_file_name_from_url(MODEL_URL)?;
-    let model_path = app_paths.cache_dir.join(&model_file_name);
-    if !model_path.try_exists()? {
-        println!("Model \"{model_file_name}\" has not been downloaded yet.");
-        println!("Download? [Y/N]");
-        let yes = read_input_yn()?;
-        if !yes {
-            println!("Exiting...");
-            return Ok(());
-        }
-
-        download_to_path_cli(MODEL_URL, &model_path).context("Failed to download model")?;
-    }
-
-    println!("Enter system message (Press Enter to skip.):");
-    let system_message = read_input()?;
-
-    let engine_settings = EngineSettings::new(
-        &model_path,
-        EngineSettingsBackend::Cpu,
-        Some(EngineSettingsBackend::Cpu),
-        Some(EngineSettingsBackend::Cpu),
-    )
-    .context("Failed to create engine settings")?;
-    engine_settings.set_max_num_tokens(32_768)?;
-    let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
-
-    let conversation_config =
-        ConversationConfig::new().context("Failed to create conversation config")?;
-    if !system_message.trim().is_empty() {
-        conversation_config.set_system_message(system_message.as_str())?;
-        println!("System prompt set.");
-    }
+fn set_tools(conversation_config: &ConversationConfig) -> anyhow::Result<()> {
     conversation_config.set_tools(&[
         ConversationTool {
             name: "get_time".to_string(),
@@ -341,6 +272,50 @@ fn main() -> anyhow::Result<()> {
             },
         },
     ])?;
+
+    Ok(())
+}
+
+fn main() -> anyhow::Result<()> {
+    let api_version = get_api_version().context("Failed to get api version")?;
+    println!("Lite-RT-LM Version: {api_version}");
+    nd_litert_lm::set_min_log_level(LogSeverity::Silent)?;
+
+    let app_paths = get_app_paths()?;
+    let model_file_name = get_file_name_from_url(MODEL_URL)?;
+    let model_path = app_paths.cache_dir.join(&model_file_name);
+    if !model_path.try_exists()? {
+        println!("Model \"{model_file_name}\" has not been downloaded yet.");
+        println!("Download? [Y/N]");
+        let yes = read_input_yn()?;
+        if !yes {
+            println!("Exiting...");
+            return Ok(());
+        }
+
+        download_to_path_cli(MODEL_URL, &model_path).context("Failed to download model")?;
+    }
+
+    println!("Enter system message (Press Enter to skip.):");
+    let system_message = read_input()?;
+
+    let engine_settings = EngineSettings::new(
+        &model_path,
+        EngineSettingsBackend::Cpu,
+        Some(EngineSettingsBackend::Cpu),
+        Some(EngineSettingsBackend::Cpu),
+    )
+    .context("Failed to create engine settings")?;
+    engine_settings.set_max_num_tokens(32_768)?;
+    let engine = Engine::new(&engine_settings).context("Failed to create engine")?;
+
+    let conversation_config =
+        ConversationConfig::new().context("Failed to create conversation config")?;
+    if !system_message.trim().is_empty() {
+        conversation_config.set_system_message(system_message.as_str())?;
+        println!("System prompt set.");
+    }
+    set_tools(&conversation_config)?;
     let conversation = Conversation::new(&engine, &conversation_config)
         .context("Failed to create conversation")?;
 
@@ -457,27 +432,14 @@ fn main() -> anyhow::Result<()> {
             for tool_call in parsed.tool_calls.iter() {
                 let tool_name = tool_call.name.as_str();
                 let response = match tool_name {
-                    "get_time" => {
-                        let now = jiff::ZonedDateTime::now();
-                        serde_json::Value::String(now.to_string())
-                    }
+                    "get_time" => self::tools::get_time(),
                     "read_dir" => {
                         let path = tool_call
                             .arguments
                             .get("path")
                             .map(|path| path.as_str())
                             .unwrap_or(".");
-                        let mut files = Vec::new();
-                        for entry in std::fs::read_dir(path)? {
-                            let entry = entry?;
-                            let file_name = entry
-                                .file_name()
-                                .into_string()
-                                .ok()
-                                .context("File name is not unicode")?;
-                            files.push(file_name);
-                        }
-                        serde_json::to_value(&files)?
+                        self::tools::read_dir(path)?
                     }
                     "read_file" => {
                         let path = tool_call
@@ -485,14 +447,9 @@ fn main() -> anyhow::Result<()> {
                             .get("path")
                             .map(|path| path.as_str())
                             .unwrap_or(".");
-                        let value = std::fs::read_to_string(path)?;
-                        value.into()
+                        self::tools::read_file(path)?
                     }
-                    "pwd" => {
-                        let pwd = std::env::current_dir()?;
-                        let pwd = pwd.into_string().ok().context("Path is not unicode")?;
-                        pwd.into()
-                    }
+                    "pwd" => self::tools::pwd()?,
                     _ => bail!("Unknown tool \"{tool_name}\""),
                 };
 
