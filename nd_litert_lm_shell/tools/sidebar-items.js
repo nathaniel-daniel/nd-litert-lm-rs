@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_time","pwd","read_dir","read_file"]};

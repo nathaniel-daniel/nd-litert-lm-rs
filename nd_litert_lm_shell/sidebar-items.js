@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MODEL_URL"],"fn":["download_to_path_cli","get_app_paths","main","run_attach_command","run_help_command","set_tools"],"mod":["tools","util"],"struct":["AppPaths","CommandParser"]};
