@@ -36,6 +36,8 @@ const MODEL_URL: &str = "https://huggingface.co/litert-community/gemma-4-E2B-it-
 
 #[derive(Debug)]
 struct AppPaths {
+    #[expect(dead_code)]
+    data_dir: PathBuf,
     cache_dir: PathBuf,
 }
 
@@ -49,10 +51,16 @@ fn get_app_paths() -> anyhow::Result<&'static AppPaths> {
         })
         .context("Failed to locate app directories")?;
 
+        let data_dir = strategy.data_dir();
+        std::fs::create_dir_all(&data_dir).context("Failed to create data dir")?;
+
         let cache_dir = strategy.cache_dir();
         std::fs::create_dir_all(&cache_dir).context("Failed to create cache dir")?;
 
-        anyhow::Ok(AppPaths { cache_dir })
+        anyhow::Ok(AppPaths {
+            data_dir,
+            cache_dir,
+        })
     })
 }
 

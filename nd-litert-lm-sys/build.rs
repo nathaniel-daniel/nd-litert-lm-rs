@@ -87,7 +87,8 @@ fn main() {
     let dll_name = dll_path.file_name().expect("Missing file name");
     let target_dir = out_dir
         .ancestors()
-        .nth(4)
+        .find(|path| path.file_name().is_some_and(|name| name == "build"))
+        .and_then(|build_path| build_path.parent())
         .expect("Failed to find target profile directory");
     let out_dll_path = target_dir.join(dll_name);
 
